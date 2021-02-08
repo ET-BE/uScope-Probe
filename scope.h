@@ -28,7 +28,15 @@ public:
     /**
      * Update channel value
      */
+    //void set(size_t channel, float val);
+
+    /**
+     * Update channel value (while casting to float)
+     */
     void set(size_t channel, float val);
+
+    void set(size_t channel, bool val) {set(channel, (float)val);}
+    void set(size_t channel, int val) {set(channel, (float)val);}
 
     /**
      * Transmit collected buffer
