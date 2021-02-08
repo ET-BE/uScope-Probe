@@ -46,6 +46,5 @@ protected:
     float* data;
     char headers[3] = {0x7f, 0xff, 0xbf};
     BufferedSerial serial;
-    Timer timer; /// Used to keep track of the current runtime
 
 };

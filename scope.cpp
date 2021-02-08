@@ -1,6 +1,8 @@
 #include "scope.h"
 #include <chrono>
 
+using namespace std::chrono;
+
 /**
  * Data structure to convert float to bytes
  */
@@ -25,7 +27,6 @@ Scope::Scope(
 
     nchannels = channels;
     data = new float(nchannels);
-    timer.start();
 }
 
 // Destructor
@@ -33,6 +34,7 @@ Scope::~Scope() {
     if (data) {
         delete[] data;
     }
+    serial.close();
 }
 
 // Set channel value
@@ -55,7 +57,9 @@ void Scope::send() {
     serial.write(nch, 1);
 
     // Send time
-    longUnion.l = std::chrono::duration_cast<std::chrono::microseconds>(timer.elapsed_time()).count();
+    auto now_ms = time_point_cast<microseconds>(Kernel::Clock::now());
+    longUnion.l = now_ms.time_since_epoch().count();
+
     // Flip byte order before sending (that's how uScope expects it)
     std::reverse(longUnion.bytes, longUnion.bytes + 4);
     serial.write(longUnion.bytes, 4);
