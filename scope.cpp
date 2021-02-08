@@ -25,7 +25,7 @@ Scope::Scope(
 
     nchannels = channels;
     data = new float(nchannels);
-    start_time = time(NULL);
+    timer.start();
 }
 
 // Destructor
@@ -55,8 +55,7 @@ void Scope::send() {
     serial.write(nch, 1);
 
     // Send time
-    double time_dur = double(time(NULL) - start_time);
-    longUnion.l = (signed long)(time_dur * 1.0e6);
+    longUnion.l = std::chrono::duration_cast<std::chrono::microseconds>(timer.elapsed_time()).count();
     // Flip byte order before sending (that's how uScope expects it)
     std::reverse(longUnion.bytes, longUnion.bytes + 4);
     serial.write(longUnion.bytes, 4);
