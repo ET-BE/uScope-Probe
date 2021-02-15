@@ -20,13 +20,27 @@ union longUnion {
 } longUnion;
 
 // Constructor
-Scope::Scope(
-    size_t channels,
-    PinName rx,
-    PinName tx) : serial(tx, rx, 115200) {
+Scope::Scope(size_t channels, bool connect_blocking) : 
+    hid(connect_blocking, 64, 64) {
+
+    size_t channels_max = MAX_HID_REPORT_SIZE / sizeof(float) - 1;
+
+    if (nchannels > channels_max) {
+        nchannels = channels_max; // Error
+    }
+
+    hid.device_desc()
 
     nchannels = channels;
     data = new float(nchannels);
+
+    output_report.length = MAX_HID_REPORT_SIZE; // 64
+    for (size_t i = 0; i < output_report.length; i++) {
+        output_report.data[i] = 0; // Initialize at zero
+    }
+
+    output_report.data[0] = nchannels; // Already set the
+    // channel count (not going to change)
 }
 
 // Destructor
@@ -34,7 +48,7 @@ Scope::~Scope() {
     if (data) {
         delete[] data;
     }
-    serial.close();
+    hid.disconnect();
 }
 
 // Set channel value
@@ -43,31 +57,20 @@ void Scope::set(size_t channel, float val) {
         return; // Error
     }
 
+    // Don't write directly into the output report,
+    // because it could be sending (non-blocking after
+    // all)
+
     data[channel] = val;
 }
 
 // Transmit frame
 void Scope::send() {
 
-    // Send header
-    serial.write(headers, 3);
+    // Copy data into output report (skipping the first byte)
+    memcpy(&output_report.data[1], data, nchannels * sizeof(float));
 
-    // Send channel count
-    const char nch[] = {static_cast<char>(nchannels)};
-    serial.write(nch, 1);
-
-    // Send time
-    auto now_ms = time_point_cast<microseconds>(Kernel::Clock::now());
-    longUnion.l = now_ms.time_since_epoch().count();
-
-    // Flip byte order before sending (that's how uScope expects it)
-    std::reverse(longUnion.bytes, longUnion.bytes + 4);
-    serial.write(longUnion.bytes, 4);
-
-    // Send floats
-    for (size_t i = 0; i < nchannels; i++) {
-        
-        floatUnion.f = data[i];
-        serial.write(floatUnion.bytes, 4);
-    }
+    // The output_report is continuously updated by the API, 
+    // so we can send it directly:
+    hid.send_nb(&output_report);
 }
