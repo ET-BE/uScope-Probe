@@ -2,10 +2,18 @@
 #include "drivers/usb/include/usb/USBHID.h"
 
 /**
+ * The size of the report sent
+ * It seems that only the default 64 bytes really works.
+ */
+#define HID_REPORT_SIZE MAX_HID_REPORT_SIZE
+
+/**
  * Class to transmit debug data to a graphical scope on a PC
  *
  * The protocol is (per report):
  * The number of channels (1 byte, signed integer): 03
+ * The current runtime in micro seconds
+ * (4 bytes, unsigned integer): 00 00 00 01
  * Then follow the floats (4 bytes each): 01 01 01 01 ...
  *
  * Data is send over the second USB port, using USBHID. Sending over HID
@@ -55,7 +63,6 @@ public:
 protected:
     size_t nchannels;
     float* data;
-    const char headers[3] = {0x7f, 0xff, 0xbf};
     USBHID hid;
     HID_REPORT output_report;
 

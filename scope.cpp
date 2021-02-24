@@ -21,20 +21,18 @@ union longUnion {
 
 // Constructor
 Scope::Scope(size_t channels, bool connect_blocking) : 
-    hid(connect_blocking, 64, 64) {
+    hid(connect_blocking, HID_REPORT_SIZE, MAX_HID_REPORT_SIZE) {
 
-    size_t channels_max = MAX_HID_REPORT_SIZE / sizeof(float) - 1;
+    size_t channels_max = (HID_REPORT_SIZE  - 1 - sizeof(long)) / sizeof(float);
 
     if (nchannels > channels_max) {
         nchannels = channels_max; // Error
     }
 
-    hid.device_desc()
-
     nchannels = channels;
     data = new float(nchannels);
 
-    output_report.length = MAX_HID_REPORT_SIZE; // 64
+    output_report.length = HID_REPORT_SIZE;
     for (size_t i = 0; i < output_report.length; i++) {
         output_report.data[i] = 0; // Initialize at zero
     }
@@ -67,8 +65,14 @@ void Scope::set(size_t channel, float val) {
 // Transmit frame
 void Scope::send() {
 
-    // Copy data into output report (skipping the first byte)
-    memcpy(&output_report.data[1], data, nchannels * sizeof(float));
+    // Send time
+    auto now_us = time_point_cast<microseconds>(Kernel::Clock::now());
+    longUnion.l = now_us.time_since_epoch().count();
+    // Copy time into output report (after the nch byte)
+    memcpy(&output_report.data[1], longUnion.bytes, sizeof(long));
+
+    // Copy data into output report (after the time bytes)
+    memcpy(&output_report.data[1] + sizeof(long), data, nchannels * sizeof(float));
 
     // The output_report is continuously updated by the API, 
     // so we can send it directly:
