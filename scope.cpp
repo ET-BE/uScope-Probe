@@ -68,11 +68,18 @@ void Scope::send() {
     // Send time
     auto now_us = time_point_cast<microseconds>(Kernel::Clock::now());
     longUnion.l = now_us.time_since_epoch().count();
+
+    uint8_t* cursor = output_report.data; // Start at the first byte of the list
+
+    cursor += 1; // Skip number-of-channels byte
+
     // Copy time into output report (after the nch byte)
-    memcpy(&output_report.data[1], longUnion.bytes, sizeof(long));
+    memcpy(cursor, longUnion.bytes, sizeof(long));
+
+    cursor += sizeof(long);
 
     // Copy data into output report (after the time bytes)
-    memcpy(&output_report.data[1] + sizeof(long), data, nchannels * sizeof(float));
+    memcpy(cursor, data, nchannels * sizeof(float));
 
     // The output_report is continuously updated by the API, 
     // so we can send it directly:
