@@ -51,6 +51,15 @@ public:
     void set(size_t channel, float val);
 
     /**
+     * Update multiple channels using memcpy
+     *
+     * @param channel First channel to fill
+     * @param buffer Pointer to array of data to send
+     * @param size Number of elements in buffer to copy (defaults to number of channels)
+     */
+    void set(size_t channel, const float* buffer, size_t size = 0);
+
+    /**
      * Transmit collected buffer
      *
      * Sending is non-blocking using HID.
