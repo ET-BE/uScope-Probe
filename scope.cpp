@@ -1,6 +1,5 @@
 #include "scope.h"
 #include <chrono>
-#include <cstring>
 
 using namespace std::chrono;
 
@@ -44,10 +43,12 @@ Scope::Scope(size_t channels, bool connect_blocking) :
 
 // Destructor
 Scope::~Scope() {
+
+    hid.disconnect();
+
     if (data) {
         delete[] data;
     }
-    hid.disconnect();
 }
 
 // Set channel value
@@ -57,7 +58,7 @@ void Scope::set(size_t channel, float val) {
     }
 
     // Don't write directly into the output report,
-    // because it could be sending (non-blocking after
+    // because it could still be sending (non-blocking after
     // all)
 
     data[channel] = val;
@@ -70,14 +71,17 @@ void Scope::set(size_t channel, const float* buffer, size_t size) {
         size = nchannels;
     }
 
-    if (channel + size >= nchannels) {
+    if (channel + size > nchannels) {
         return; // Error
     }
 
     // Don't write directly into the output report, because
     // it could still be sending (it's non-blocking after all)
 
-    memcpy(&data[channel], buffer, size);
+    for (size_t i = 0; i < size; i++) {
+        data[channel + i] = buffer[i];
+        // memcpy() might also work, but array access is safer like this
+    }
 }
 
 
@@ -88,18 +92,11 @@ void Scope::send() {
     // Send time
     auto now_us = time_point_cast<microseconds>(Kernel::Clock::now());
     longUnion.l = now_us.time_since_epoch().count();
-
-    uint8_t* cursor = output_report.data; // Start at the first byte of the list
-
-    cursor += 1; // Skip number-of-channels byte
-
     // Copy time into output report (after the nch byte)
-    memcpy(cursor, longUnion.bytes, sizeof(long));
-
-    cursor += sizeof(long);
+    memcpy(&output_report.data[1], longUnion.bytes, sizeof(long));
 
     // Copy data into output report (after the time bytes)
-    memcpy(cursor, data, nchannels * sizeof(float));
+    memcpy(&output_report.data[1] + sizeof(long), data, nchannels * sizeof(float));
 
     // The output_report is continuously updated by the API, 
     // so we can send it directly:

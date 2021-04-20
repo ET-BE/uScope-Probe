@@ -51,7 +51,7 @@ public:
     void set(size_t channel, float val);
 
     /**
-     * Update multiple channels using memcpy
+     * Update multiple channels for arrays
      *
      * @param channel First channel to fill
      * @param buffer Pointer to array of data to send
