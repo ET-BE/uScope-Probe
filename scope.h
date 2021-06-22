@@ -1,4 +1,4 @@
-#include "mbed.h"
+#include <Arduino.h>
 
 /**
  * Class to transmit debug data to a graphical scope on a PC
@@ -8,6 +8,8 @@
  * Then the channel count (1 byte): 03
  * Then the microtime (4 bytes, signed integer): 00 01 01 01
  * Then follow the floats (4 bytes each): 01 01 01 01 ...
+ * 
+ * This Arduino version uses the `Serial` global instance directly.
  */
 class Scope {
 
@@ -18,7 +20,7 @@ public:
      *
      * @param channels Number of parallel channels
      */
-    Scope(size_t channels, PinName rx = USBRX, PinName tx = USBTX);
+    Scope(size_t channels);
 
     /**
      * Destuctor
@@ -45,6 +47,5 @@ protected:
     size_t nchannels;
     float* data;
     char headers[3] = {0x7f, 0xff, 0xbf};
-    BufferedSerial serial;
 
 };

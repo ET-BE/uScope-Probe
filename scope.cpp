@@ -1,7 +1,4 @@
 #include "scope.h"
-#include <chrono>
-
-using namespace std::chrono;
 
 /**
  * Data structure to convert float to bytes
@@ -20,10 +17,7 @@ union longUnion {
 } longUnion;
 
 // Constructor
-Scope::Scope(
-    size_t channels,
-    PinName rx,
-    PinName tx) : serial(tx, rx, 115200) {
+Scope::Scope(size_t channels) {
 
     nchannels = channels;
     data = new float(nchannels);
@@ -34,7 +28,6 @@ Scope::~Scope() {
     if (data) {
         delete[] data;
     }
-    serial.close();
 }
 
 // Set channel value
@@ -49,25 +42,31 @@ void Scope::set(size_t channel, float val) {
 // Transmit frame
 void Scope::send() {
 
+    if (!Serial.availableForWrite()) {
+        return; // Error, prevent blocking write
+    }
+
     // Send header
-    serial.write(headers, 3);
+    Serial.write(headers, 3);
 
     // Send channel count
     const char nch[] = {static_cast<char>(nchannels)};
-    serial.write(nch, 1);
+    Serial.write(nch, 1);
 
     // Send time
-    auto now_ms = time_point_cast<microseconds>(Kernel::Clock::now());
-    longUnion.l = now_ms.time_since_epoch().count();
+    longUnion.l = micros();
 
     // Flip byte order before sending (that's how uScope expects it)
-    std::reverse(longUnion.bytes, longUnion.bytes + 4);
-    serial.write(longUnion.bytes, 4);
+    char int_bytes[4];
+    for (size_t i = 0; i < 4; i++) {
+        int_bytes[i] = longUnion.bytes[3 - i];
+    }
+    Serial.write(int_bytes, 4);
 
     // Send floats
     for (size_t i = 0; i < nchannels; i++) {
         
         floatUnion.f = data[i];
-        serial.write(floatUnion.bytes, 4);
+        Serial.write(floatUnion.bytes, 4);
     }
 }

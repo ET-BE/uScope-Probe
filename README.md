@@ -1,4 +1,4 @@
-# MBED-Scope
+# MBED-Scope (for Arduino)
 
 Scope for embedded C++ to transmit data for a data-scope.
 
