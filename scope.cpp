@@ -39,6 +39,25 @@ void Scope::set(size_t channel, float val) {
     data[channel] = val;
 }
 
+// Set channel value from list
+void Scope::set(size_t channel, const float* buffer, size_t size) {
+
+    if (size == 0) {
+        size = nchannels;
+    }
+
+    if (channel + size >= nchannels) {
+        return; // Error
+    }
+
+    // Don't write directly into the output report, because
+    // it could still be sending (it's non-blocking after all)
+
+    memcpy(&data[channel], buffer, size);
+}
+
+
+
 // Transmit frame
 void Scope::send() {
 
