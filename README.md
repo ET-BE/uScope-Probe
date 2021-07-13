@@ -4,6 +4,14 @@ Scope for embedded C++ to transmit data for a data-scope.
 
 Designed to transmit data for uScope (<https://bitbucket.org/ctw-bw/uscope>).
 
+## Versions
+
+| Branch   | Used for             |
+|----------|----------------------|
+| main     | MBED, UART Serial    |
+| mbed_hid | MBED, HID USB        |
+| arduino  | Arduino, UART Serial |
+
 ## Example
 
 You can use the library like:
