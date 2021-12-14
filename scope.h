@@ -18,9 +18,10 @@ public:
     /**
      * Constructor
      *
-     * @param channels Number of parallel channels
+     * @param channels  Number of parallel channels
+     * @param serial    Serial stream to use (Serial1 by default)
      */
-    Scope(size_t channels);
+    Scope(size_t channels, Stream* serial = &Serial);
 
     /**
      * Destructor
@@ -53,6 +54,7 @@ public:
     void send();
 
 protected:
+    Stream* serial_ptr;
     size_t nchannels;
     float* data;
     char headers[3] = {0x7f, 0xff, 0xbf};

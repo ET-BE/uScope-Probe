@@ -17,7 +17,9 @@ union longUnion {
 } longUnion;
 
 // Constructor
-Scope::Scope(size_t channels) {
+Scope::Scope(size_t channels, Stream* serial) {
+
+    serial_ptr = serial;
 
     nchannels = channels;
     data = new float(nchannels);
@@ -59,16 +61,16 @@ void Scope::set(const float* buffer, size_t channel, size_t size) {
 // Transmit frame
 void Scope::send() {
 
-    if (!Serial.availableForWrite()) {
+    if (!serial_ptr->availableForWrite()) {
         return; // Error, prevent blocking write
     }
 
     // Send header
-    Serial.write(headers, 3);
+    serial_ptr->write(headers, 3);
 
     // Send channel count
     const char nch[] = {static_cast<char>(nchannels)};
-    Serial.write(nch, 1);
+    serial_ptr->write(nch, 1);
 
     // Send time
     longUnion.l = micros();
@@ -78,12 +80,12 @@ void Scope::send() {
     for (size_t i = 0; i < 4; i++) {
         int_bytes[i] = longUnion.bytes[3 - i];
     }
-    Serial.write(int_bytes, 4);
+    serial_ptr->write(int_bytes, 4);
 
     // Send floats
     for (size_t i = 0; i < nchannels; i++) {
         
         floatUnion.f = data[i];
-        Serial.write(floatUnion.bytes, 4);
+        serial_ptr->write(floatUnion.bytes, 4);
     }
 }
