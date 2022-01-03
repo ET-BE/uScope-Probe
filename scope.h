@@ -53,11 +53,11 @@ public:
     /**
      * Update multiple channels for arrays
      *
-     * @param channel First channel to fill
      * @param buffer Pointer to array of data to send
+     * @param channel First channel to fill (defaults to 0)
      * @param size Number of elements in buffer to copy (defaults to number of channels)
      */
-    void set(size_t channel, const float* buffer, size_t size = 0);
+    void set(const float* buffer, size_t channel = 0, size_t size = 0);
 
     /**
      * Transmit collected buffer

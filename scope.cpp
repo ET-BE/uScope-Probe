@@ -65,7 +65,7 @@ void Scope::set(size_t channel, float val) {
 }
 
 // Set channel value from list
-void Scope::set(size_t channel, const float* buffer, size_t size) {
+void Scope::set(const float* buffer, size_t channel, size_t size) {
 
     if (size == 0) {
         size = nchannels;
