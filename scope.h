@@ -1,13 +1,35 @@
-#include "mbed.h"
+#ifndef SCOPE_H_
+#define SCOPE_H_
+
+#include <stddef.h>
+
+#ifndef ARDUINO
+#include <cstdint>
+#include <cstring>
+#endif
 
 /**
- * Class to transmit debug data to a graphical scope on a PC
+ * Data structure to convert float to bytes
+ */
+union FloatUnion {  
+    float f;  
+    char bytes[4];  
+};
+extern FloatUnion floatUnion;
+
+/**
+ * Data structure to convert long to bytes
+ */
+union LongUnion {  
+    signed long l;  
+    char bytes[4];  
+};
+extern LongUnion longUnion;
+
+/**
+ * Class to transmit data to a graphical scope on a PC
  *
- * The protocol is:
- * First the header (3 bytes): 7f ff bf
- * Then the channel count (1 byte): 03
- * Then the microtime (4 bytes, signed integer): 00 01 01 01
- * Then follow the floats (4 bytes each): 01 01 01 01 ...
+ * Implement this abstract class with a transport type.
  */
 class Scope {
 
@@ -18,10 +40,10 @@ public:
      *
      * @param channels Number of parallel channels
      */
-    Scope(size_t channels, PinName rx = USBRX, PinName tx = USBTX);
+    Scope(size_t channels);
 
     /**
-     * Destuctor
+     * Destructor
      */
     ~Scope();
 
@@ -31,13 +53,15 @@ public:
     void set(size_t channel, float val);
 
     /**
-     * Update multiple channels using memcpy
+     * Update multiple channels
+     * 
+     * `size` defaults to the number of channels available after `channel`.
      *
-     * @param channel First channel to fill
      * @param buffer Pointer to array of data to send
-     * @param size Number of elements in buffer to copy (defaults to number of channels)
+     * @param channel First channel to fill
+     * @param size Number of elements in buffer to copy
      */
-    void set(size_t channel, const float* buffer, size_t size = 0);
+    void set(const float* buffer, size_t channel = 0, size_t size = 0);
 
     /**
      * Transmit collected buffer
@@ -48,12 +72,20 @@ public:
      * Sending a frame does _not_ clear the buffer. Calling send() repeatedly
      * will send the same values over and over.
      */
-    void send();
+    virtual void send() = 0;
+
+    /**
+     * @brief Get current runtime in microseconds
+     * 
+     * @return long
+     */
+    static long micros();
 
 protected:
+
     size_t nchannels;
     float* data;
-    char headers[3] = {0x7f, 0xff, 0xbf};
-    BufferedSerial serial;
 
 };
+
+#endif

@@ -6,21 +6,29 @@ Designed to transmit data for uScope (<https://bitbucket.org/ctw-bw/uscope>).
 
 ## Versions
 
-| Branch   | Used for             |
-|----------|----------------------|
-| main     | MBED, UART Serial    |
-| mbed_hid | MBED, HID USB        |
-| arduino  | Arduino, UART Serial |
+MBED and Arduino compatible versions both live in the main branch. These compile slightly differently using the `ARDUINO` macro.
+
+Use either `HIDScope` from `scope_hid.h` or `SerialScope` from `scope_serial.h`.
+
+### Legacy
+
+There are older branches where different versions used to live. These were:
+
+| Branch   | Used for                               |
+|----------|----------------------------------------|
+| main     | Everything (legacy: MBED, UART Serial) |
+| mbed_hid | Legacy: MBED, HID USB                  |
+| arduino  | Legacy: Arduino, UART Serial           |
 
 ## Example
 
 You can use the library like:
 
 ```c++
-#include "mbed.h"
-#include "mbed-scope/scope.h"
+#include <mbed.h>
+#include "mbed-scope/scope_hid.h"
 
-Scope scope(2); // Create two channels
+HIDScope scope(2); // Create two channels
 
 int main()
 {

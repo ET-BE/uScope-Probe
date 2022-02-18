@@ -1,30 +1,15 @@
 #include "scope.h"
+
+#ifndef ARDUINO
+#include <mbed.h>
 #include <chrono>
-#include <cstring>
+#endif
 
-using namespace std::chrono;
-
-/**
- * Data structure to convert float to bytes
- */
-union floatUnion {  
-    float f;  
-    char bytes[4];  
-} floatUnion;
-
-/**
- * Data structure to convert long to bytes
- */
-union longUnion {  
-    signed long l;  
-    char bytes[4];  
-} longUnion;
+FloatUnion floatUnion;
+LongUnion longUnion;
 
 // Constructor
-Scope::Scope(
-    size_t channels,
-    PinName rx,
-    PinName tx) : serial(tx, rx, 115200) {
+Scope::Scope(size_t channels) {
 
     nchannels = channels;
     data = new float(nchannels);
@@ -35,7 +20,6 @@ Scope::~Scope() {
     if (data) {
         delete[] data;
     }
-    serial.close();
 }
 
 // Set channel value
@@ -48,46 +32,29 @@ void Scope::set(size_t channel, float val) {
 }
 
 // Set channel value from list
-void Scope::set(size_t channel, const float* buffer, size_t size) {
+void Scope::set(const float* buffer, size_t channel, size_t size) {
 
     if (size == 0) {
-        size = nchannels;
+        size = nchannels - channel;
     }
 
     if (channel + size >= nchannels) {
         return; // Error
     }
 
-    // Don't write directly into the output report, because
-    // it could still be sending (it's non-blocking after all)
-
-    memcpy(&data[channel], buffer, size);
+    for (size_t i = 0; i < size; i++) {
+        data[channel + i] = buffer[i];
+    }
 }
 
+// micros (static method)
+long Scope::micros() {
 
-
-// Transmit frame
-void Scope::send() {
-
-    // Send header
-    serial.write(headers, 3);
-
-    // Send channel count
-    const char nch[] = {static_cast<char>(nchannels)};
-    serial.write(nch, 1);
-
-    // Send time
+#ifdef ARDUINO
+    return micros();
+#else
+    using namespace std::chrono;
     auto now_ms = time_point_cast<microseconds>(Kernel::Clock::now());
-    longUnion.l = now_ms.time_since_epoch().count();
-
-    // Flip byte order before sending (that's how uScope expects it)
-    std::reverse(longUnion.bytes, longUnion.bytes + 4);
-    serial.write(longUnion.bytes, 4);
-
-    // Send floats
-    for (size_t i = 0; i < nchannels; i++) {
-        
-        floatUnion.f = data[i];
-        serial.write(floatUnion.bytes, 4);
-    }
+    return now_ms.time_since_epoch().count();
+#endif
 }
