@@ -1,5 +1,13 @@
 #include "scope.h"
 
+#ifndef ARDUINO
+#include <mbed.h>
+#include <chrono>
+#endif
+
+FloatUnion floatUnion;
+LongUnion longUnion;
+
 // Constructor
 Scope::Scope(size_t channels) {
 
@@ -34,7 +42,19 @@ void Scope::set(const float* buffer, size_t channel, size_t size) {
         return; // Error
     }
 
-    for (size_t i = 0; i++; i < size) {
+    for (size_t i = 0; i < size; i++) {
         data[channel + i] = buffer[i];
     }
+}
+
+// micros (static method)
+long Scope::micros() {
+
+#ifdef ARDUINO
+    return micros();
+#else
+    using namespace std::chrono;
+    auto now_ms = time_point_cast<microseconds>(Kernel::Clock::now());
+    return now_ms.time_since_epoch().count();
+#endif
 }

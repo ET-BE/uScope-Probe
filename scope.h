@@ -9,6 +9,24 @@
 #endif
 
 /**
+ * Data structure to convert float to bytes
+ */
+union FloatUnion {  
+    float f;  
+    char bytes[4];  
+};
+extern FloatUnion floatUnion;
+
+/**
+ * Data structure to convert long to bytes
+ */
+union LongUnion {  
+    signed long l;  
+    char bytes[4];  
+};
+extern LongUnion longUnion;
+
+/**
  * Class to transmit data to a graphical scope on a PC
  *
  * Implement this abstract class with a transport type.
@@ -56,7 +74,15 @@ public:
      */
     virtual void send() = 0;
 
+    /**
+     * @brief Get current runtime in microseconds
+     * 
+     * @return long
+     */
+    static long micros();
+
 protected:
+
     size_t nchannels;
     float* data;
 

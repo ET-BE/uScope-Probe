@@ -57,13 +57,6 @@ public:
      */
     virtual void send() override;
 
-    /**
-     * @brief Get current runtime in microseconds
-     * 
-     * @return long
-     */
-    static long micros();
-
 protected:
     char headers[3] = {0x7f, 0xff, 0xbf};
 

@@ -1,26 +1,5 @@
 #include "scope_serial.h"
 
-#ifndef ARDUINO
-#include <chrono>
-#include <cstring>
-#endif
-
-/**
- * Data structure to convert float to bytes
- */
-union floatUnion {  
-    float f;  
-    char bytes[4];  
-} floatUnion;
-
-/**
- * Data structure to convert long to bytes
- */
-union longUnion {  
-    signed long l;  
-    char bytes[4];  
-} longUnion;
-
 // Constructor
 #ifdef ARDUINO
 SerialScope::SerialScope(size_t channels, Stream* serial) : 
@@ -68,16 +47,4 @@ void SerialScope::send() {
         floatUnion.f = data[i];
         serial_ptr->write(floatUnion.bytes, 4);
     }
-}
-
-// micros (static method)
-long SerialScope::micros() {
-
-#ifdef ARDUINO
-    return micros();
-#else
-    using namespace std::chrono;
-    auto now_ms = time_point_cast<microseconds>(Kernel::Clock::now());
-    return now_ms.time_since_epoch().count();
-#endif
 }
